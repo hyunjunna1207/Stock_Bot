@@ -1,0 +1,12 @@
+{
+  "korean": [
+    { "code": "005930", "ticker": "005930.KS", "name": "삼성전자" },
+    { "code": "000660", "ticker": "000660.KS", "name": "SK하이닉스" },
+    { "code": "035420", "ticker": "035420.KS", "name": "NAVER" }
+  ],
+  "us": [
+    { "code": "NVDA", "ticker": "NVDA", "name": "NVIDIA" },
+    { "code": "AAPL", "ticker": "AAPL", "name": "Apple" },
+    { "code": "TSLA", "ticker": "TSLA", "name": "Tesla" }
+  ]
+}
