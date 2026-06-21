@@ -1,8 +1,9 @@
+# 국장 시작 1시간 전 — 평일 오전 8시 KST (UTC 23:00, 전날)
 name: KR Market Daily Summary
 
 on:
   schedule:
-    - cron: "40 6 * * 1-5"
+    - cron: "0 23 * * 0-4"   # 일~목 UTC 23:00 = 월~금 KST 08:00
   workflow_dispatch:
 
 jobs:
