@@ -1,8 +1,9 @@
-"""main.py — 주가 + 뉴스 수집 후 카카오톡 전송"""
+"""main.py — 주가 + 뉴스 수집 후 카카오톡 전송 (종목별 분리)"""
 
 import json
 import os
 import sys
+import time
 from datetime import datetime, timezone, timedelta
 
 from price_fetcher import fetch_price
@@ -20,19 +21,21 @@ def load_stocks() -> list[dict]:
     return data["korean"] if MARKET == "KR" else data["us"]
 
 
-def build_stock_section(stock: dict) -> str:
+def build_stock_message(stock: dict) -> str:
     is_korean = MARKET == "KR"
-    ticker    = stock["ticker"]
-    name      = stock["name"]
-    code      = stock["code"]
+    ticker = stock["ticker"]
+    name   = stock["name"]
+    code   = stock["code"]
 
+    # 주가 (가장 최근 거래일 종가)
     price_data = fetch_price(ticker, is_korean)
     if price_data:
-        arrow      = "▲" if price_data["is_up"] else "▼"
-        price_line = f"현재가: {price_data['price']} ({arrow}{price_data['change_pct']})"
+        arrow = "▲" if price_data["is_up"] else "▼"
+        price_line = f"{price_data['price']} ({arrow}{price_data['change_pct']}) [{price_data['date']} 종가]"
     else:
-        price_line = "현재가: 데이터 없음"
+        price_line = "데이터 없음"
 
+    # 뉴스
     news_list = fetch_news(f"{name} 주식")
     news_lines = []
     for i, news in enumerate(news_list, 1):
@@ -40,24 +43,17 @@ def build_stock_section(stock: dict) -> str:
 
     news_block = "\n".join(news_lines) if news_lines else "  관련 뉴스 없음"
 
+    tag = "🇰🇷" if MARKET == "KR" else "🇺🇸"
+    now = datetime.now(KST).strftime("%m/%d %H:%M")
+
     return (
+        f"{tag} [{now}] 장 시작 전 리포트\n"
+        f"━━━━━━━━━━━━━━━━\n"
         f"■ {name} ({code})\n"
-        f"- {price_line}\n"
-        f"- 주요 뉴스:\n{news_block}"
+        f"💰 전일 종가: {price_line}\n\n"
+        f"📰 주요 뉴스\n"
+        f"{news_block}"
     )
-
-
-def build_message(stocks: list[dict]) -> str:
-    now  = datetime.now(KST).strftime("%Y-%m-%d %H:%M")
-    tag  = "🇰🇷 국장" if MARKET == "KR" else "🇺🇸 미장"
-    header = f"[🤖 오늘의 {tag} 주식&뉴스 요약]\n📅 {now} 기준\n\n"
-
-    sections = []
-    for stock in stocks:
-        print(f"[main] {stock['name']} 수집 중...")
-        sections.append(build_stock_section(stock))
-
-    return header + "\n\n".join(sections)
 
 
 def main():
@@ -66,13 +62,25 @@ def main():
         print("[main] 종목 없음. stocks.json을 확인하세요.")
         sys.exit(1)
 
-    message = build_message(stocks)
-    print("\n──────── 전송할 메시지 미리보기 ────────")
-    print(message)
-    print("────────────────────────────────────────\n")
+    failed = 0
+    for stock in stocks:
+        print(f"[main] {stock['name']} 처리 중...")
+        msg = build_stock_message(stock)
 
-    success = send_message(message)
-    sys.exit(0 if success else 1)
+        print(msg)
+        print("─" * 30)
+
+        ok = send_message(msg)
+        if not ok:
+            failed += 1
+
+        time.sleep(1)
+
+    if failed:
+        print(f"[main] {failed}개 종목 전송 실패")
+        sys.exit(1)
+    else:
+        print(f"[main] 전체 {len(stocks)}개 종목 전송 완료 ✅")
 
 
 if __name__ == "__main__":
