@@ -1,8 +1,9 @@
+# 미장 시작 1시간 전 — 평일 오후 9시 30분 KST (UTC 12:30)
 name: US Market Daily Summary
 
 on:
   schedule:
-    - cron: "0 21 * * 1-5"
+    - cron: "30 12 * * 1-5"   # 평일 UTC 12:30 = KST 21:30
   workflow_dispatch:
 
 jobs:
